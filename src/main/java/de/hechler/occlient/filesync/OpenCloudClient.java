@@ -117,8 +117,9 @@ public class OpenCloudClient {
 	 */
 	public void uploadFile(String path, InputStream data) {
 		try {
-			String fullPath = buildFullPath(path);
-			sardine.put(fullPath, data);
+			// InputStream in Byte-Array konvertieren, um "non-repeatable request entity" Fehler zu vermeiden
+			byte[] bytes = data.readAllBytes();
+			uploadFile(path, bytes);
 		} catch (IOException e) {
 			throw new RuntimeException("Fehler beim Hochladen der Datei: " + path, e);
 		}
