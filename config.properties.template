@@ -1,0 +1,10 @@
+# OpenCloud Client Configuration Template
+# Copy this file to 'config.properties' and fill in your credentials
+# Note: config.properties is ignored by Git for security
+
+# WebDAV Server URL
+server.url=https://opencloud.k8s.cluster-4.de/remote.php/dav/spaces/YOUR_SPACE_ID
+
+# Credentials
+server.username=your-username
+server.password=your-password-here

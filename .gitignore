@@ -1,0 +1,18 @@
+# Build artifacts
+target/
+*.class
+
+# IDE files
+.project
+.classpath
+.settings/
+*.iml
+.idea/
+
+# Configuration files with sensitive data
+config.properties
+local.properties
+
+# OS files
+.DS_Store
+Thumbs.db
