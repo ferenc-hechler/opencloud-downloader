@@ -10,10 +10,10 @@ public class DownloaderMain {
 	
 	public static void main(String[] args) {
 		
-		// test args
-		if (args == null || args.length == 0) {
-			args = new String[] { "opencloud-downloader-syncs-relative.txt" };
-		}
+//		// test args
+//		if (args == null || args.length == 0) {
+//			args = new String[] { "opencloud-downloader-syncs-relative.txt" };
+//		}
 		
 		// Erwartet: Pfad zur Sync-Config-Datei (z.B. opencloud-downloader-syncs.txt)
 		if (args == null || args.length < 1) {

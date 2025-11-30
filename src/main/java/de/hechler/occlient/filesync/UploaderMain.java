@@ -10,10 +10,10 @@ public class UploaderMain {
 	
 	public static void main(String[] args) {
 		
-		// test args
-		if (args == null || args.length == 0) {
-			args = new String[] { "opencloud-uploader-syncs-relative.txt" };
-		}
+//		// test args
+//		if (args == null || args.length == 0) {
+//			args = new String[] { "opencloud-uploader-syncs-relative.txt" };
+//		}
 		
 		// Erwartet: Pfad zur Sync-Config-Datei (z.B. opencloud-uploader-syncs.txt)
 		if (args == null || args.length < 1) {
