@@ -28,7 +28,7 @@ public class UploaderMain {
 		// Konfiguration aus Datei laden
 		OpenCloudConfig config;
 		try {
-			config = new OpenCloudConfig();
+			config = new OpenCloudConfig("opencloud-uploader.properties");
 		} catch (RuntimeException e) {
 			System.err.println("Fehler beim Laden der Konfiguration: " + e.getMessage());
 			e.printStackTrace();

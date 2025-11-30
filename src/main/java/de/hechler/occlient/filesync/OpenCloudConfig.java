@@ -26,7 +26,7 @@ public class OpenCloudConfig {
      * @throws RuntimeException wenn die Datei nicht gelesen werden kann
      */
     public OpenCloudConfig() {
-        this((String) null);
+        this(DEFAULT_CONFIG_FILE);
     }
     
     /**
@@ -43,16 +43,12 @@ public class OpenCloudConfig {
 	        
 	        // Bestimme den zu verwendenden Pfad
 	        Path configPath;
-	        if (configFile == null || configFile.trim().isEmpty()) {
+            configPath = Paths.get(configFile);
+            // Falls ein relativer Pfad übergeben wurde, verwende das user-home Verzeichnis
+            if (!configPath.isAbsolute()) {
 	            String userHome = System.getProperty("user.home");
 	            // Plattformunabhängig: Dateipfad im Home-Verzeichnis
-	            configPath = Paths.get(userHome).resolve(DEFAULT_CONFIG_FILE);
-	        } else {
-	            configPath = Paths.get(configFile);
-	            // Falls ein relativer Pfad übergeben wurde, mache ihn absolut
-	            if (!configPath.isAbsolute()) {
-	                configPath = configPath.toAbsolutePath();
-	            }
+	            configPath = Paths.get(userHome).resolve(configPath);
 	        }
 	        
 	        if (!Files.exists(configPath)) {
