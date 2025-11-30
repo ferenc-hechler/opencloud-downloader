@@ -1,0 +1,6 @@
+C:\SkipWindows\swscripts=SKIPWindows/swscripts
+C:\SkipWindows\JAVA=SKIPWindows/JAVA
+C:\SkipWindows\TEMP=SKIPWindows/TEMP
+
+
+
