@@ -28,11 +28,12 @@ public class OpenCloudClientReadOnlyExample {
 			System.out.println("=== Dateien auflisten ===");
 			List<OpenCloudClient.FileInfo> files = client.listFiles("/");
 			for (OpenCloudClient.FileInfo f : files) {
-				System.out.printf("%s\t%s\t%d bytes\t%s%n",
+				System.out.printf("%s\t%s\t%d bytes\t%s\t%s%n",
 					f.name(),
 					f.isDirectory() ? "DIR" : "FILE",
 					f.contentLength(),
-					f.last_modified() != null ? f.last_modified().toString() : "-"
+					f.last_modified() != null ? f.last_modified().toString() : "-",
+					f.md5() != null ? f.md5() : "-"
 				);
 			}
 			

@@ -28,7 +28,7 @@ public class OpenCloudClient {
 		this.baseUrl = url.endsWith("/") ? url : url + "/";
 	}
 	
-	public record FileInfo(String name, boolean isDirectory, long contentLength, Date last_modified) {}
+	public record FileInfo(String name, boolean isDirectory, long contentLength, Date last_modified, String md5) {}
 	
 	/**
 	 * Listet alle Dateien und Ordner im angegebenen Pfad auf
@@ -44,7 +44,14 @@ public class OpenCloudClient {
 			// Filtere das Elternverzeichnis selbst heraus und gebe FileInfo-Objekte zurück
 			return resources.stream()
 					.skip(1) // Erstes Element ist das Verzeichnis selbst
-					.map(r -> new FileInfo(r.getName(), r.isDirectory(), r.getContentLength(), r.getModified()))
+					.map(r -> {
+						String name = r.getName();
+						boolean isDirectory = r.isDirectory();
+						long contentLength = r.getContentLength();
+						Date last_modified = r.getModified();
+						String md5 = r.getCustomProps().get("checksums") != null ? r.getCustomProps().get("checksums").replaceFirst(".*MD5[:]([a-fA-F0-9]{32}).*", "$1").toLowerCase() :  null;
+						return new FileInfo(name, isDirectory, contentLength, last_modified, md5);
+					})
 					.collect(Collectors.toList());
 		} catch (IOException e) {
 			throw new RuntimeException("Fehler beim Auflisten der Dateien im Pfad: " + path, e);
