@@ -3,7 +3,7 @@
 https://docs.opencloud.eu/de/docs/user/admin/web-dav
 
 WebDAV URL: https://opencloud.k8s.cluster-4.de/remote.php/dav/spaces/4a4a14b1-c59e-4d38-942c-ec6c5ddaabea$3e4119b2-4807-4457-af65-a99b0f74faef
-WebDAV Path: /spaces/4a4a14b1-c59e-4d38-942c-ec6c5ddaabea%243e4119b2-4807-4457-af65-a99b0f74faef
+
 
 ## Konfiguration
 

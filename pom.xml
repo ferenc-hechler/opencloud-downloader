@@ -18,7 +18,7 @@
 	       <groupId>com.github.lookfirst</groupId>
 	       <artifactId>sardine</artifactId>
 	       <version>5.10</version>
-	   </dependency>	
+	   </dependency>
 	</dependencies>
 
 	<build>
@@ -38,7 +38,8 @@
 							<transformers>
 								<transformer
 									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<mainClass>com.example.Application</mainClass>
+									<!-- Setze die korrekte Main-Klasse für das Projekt -->
+									<mainClass>de.hechler.occlient.filesync.Application</mainClass>
 								</transformer>
 							</transformers>
 						</configuration>
