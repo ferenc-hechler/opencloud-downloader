@@ -1,6 +1,5 @@
 package de.hechler.occlient.filesync;
 
-import java.io.ByteArrayInputStream;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
@@ -10,7 +9,7 @@ import com.github.sardine.DavResource;
 /**
  * Beispielklasse zur Demonstration der Verwendung von OpenCloudClient
  */
-public class OpenCloudClientExample {
+public class OpenCloudClientReadOnlyExample {
 
 	public static void main(String[] args) {
 		try {
@@ -59,42 +58,12 @@ public class OpenCloudClientExample {
 				System.out.println("Verzeichnis /test-folder erstellt");
 			}
 			
-			// Beispiel 5: Datei hochladen (Byte-Array)
-			System.out.println("\n=== Datei hochladen ===");
-			String content = "Dies ist ein Testinhalt";
-			byte[] data = content.getBytes(StandardCharsets.UTF_8);
-			client.uploadFile("/test-folder/test.txt", data);
-			System.out.println("Datei hochgeladen");
-			
 			// Beispiel 6: Datei herunterladen
 			System.out.println("\n=== Datei herunterladen ===");
 			try (InputStream in = client.downloadFile("/test-folder/test.txt")) {
 				String downloaded = new String(in.readAllBytes(), StandardCharsets.UTF_8);
 				System.out.println("Heruntergeladener Inhalt: " + downloaded);
 			}
-			
-			// Beispiel 7: Datei kopieren
-			System.out.println("\n=== Datei kopieren ===");
-			client.copy("/test-folder/test.txt", "/test-folder/test-copy.txt");
-			System.out.println("Datei kopiert");
-			
-			// Beispiel 8: Datei verschieben/umbenennen
-			System.out.println("\n=== Datei verschieben ===");
-			client.move("/test-folder/test-copy.txt", "/test-folder/test-renamed.txt");
-			System.out.println("Datei verschoben/umbenannt");
-			
-			// Beispiel 9: Datei löschen
-			System.out.println("\n=== Datei löschen ===");
-			client.delete("/test-folder/test-renamed.txt");
-			System.out.println("Datei gelöscht");
-			
-			// Beispiel 10: InputStream hochladen
-			System.out.println("\n=== Datei mit InputStream hochladen ===");
-			String streamContent = "Inhalt über InputStream";
-			InputStream streamData = new ByteArrayInputStream(
-				streamContent.getBytes(StandardCharsets.UTF_8));
-			client.uploadFile("/test-folder/stream-test.txt", streamData);
-			System.out.println("Datei über InputStream hochgeladen");
 			
 			} catch (Exception e) {
 				System.err.println("Fehler: " + e.getMessage());

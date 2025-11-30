@@ -2,6 +2,7 @@ package de.hechler.occlient.filesync;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Date;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -27,21 +28,23 @@ public class OpenCloudClient {
 		this.baseUrl = url.endsWith("/") ? url : url + "/";
 	}
 	
+	public record FileInfo(String name, boolean isDirectory, long contentLength, Date last_modified) {}
+	
 	/**
 	 * Listet alle Dateien und Ordner im angegebenen Pfad auf
 	 * 
 	 * @param path Der Pfad, dessen Inhalt aufgelistet werden soll
 	 * @return Liste der Datei- und Ordnernamen
 	 */
-	public List<String> listFiles(String path) {
+	public List<FileInfo> listFiles(String path) {
 		try {
 			String fullPath = buildFullPath(path);
 			List<DavResource> resources = sardine.list(fullPath);
 			
-			// Filtere das Elternverzeichnis selbst heraus und gebe nur die Namen zurück
+			// Filtere das Elternverzeichnis selbst heraus und gebe FileInfo-Objekte zurück
 			return resources.stream()
 					.skip(1) // Erstes Element ist das Verzeichnis selbst
-					.map(DavResource::getName)
+					.map(r -> new FileInfo(r.getName(), r.isDirectory(), r.getContentLength(), r.getModified()))
 					.collect(Collectors.toList());
 		} catch (IOException e) {
 			throw new RuntimeException("Fehler beim Auflisten der Dateien im Pfad: " + path, e);
