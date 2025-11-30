@@ -23,9 +23,9 @@ public class OpenCloudConfig {
      * Erstellt eine Konfiguration aus der Standard-Datei
      * (Datei: <user.home>/opencloud-downloader.properties)
      * 
-     * @throws IOException wenn die Datei nicht gelesen werden kann
+     * @throws RuntimeException wenn die Datei nicht gelesen werden kann
      */
-    public OpenCloudConfig() throws IOException {
+    public OpenCloudConfig() {
         this((String) null);
     }
     
@@ -35,46 +35,50 @@ public class OpenCloudConfig {
      * "opencloud-downloader.properties" im Home-Verzeichnis des Users verwendet.
      * 
      * @param configFile Pfad zur Konfigurationsdatei (kann relativ oder absolut sein)
-     * @throws IOException wenn die Datei nicht gelesen werden kann
+     * @throws RuntimeException wenn die Datei nicht gelesen werden kann
      */
-    public OpenCloudConfig(String configFile) throws IOException {
-        properties = new Properties();
-        
-        // Bestimme den zu verwendenden Pfad
-        Path configPath;
-        if (configFile == null || configFile.trim().isEmpty()) {
-            String userHome = System.getProperty("user.home");
-            // Plattformunabhängig: Dateipfad im Home-Verzeichnis
-            configPath = Paths.get(userHome).resolve(DEFAULT_CONFIG_FILE);
-        } else {
-            configPath = Paths.get(configFile);
-            // Falls ein relativer Pfad übergeben wurde, mache ihn absolut
-            if (!configPath.isAbsolute()) {
-                configPath = configPath.toAbsolutePath();
-            }
-        }
-        
-        if (!Files.exists(configPath)) {
-            // Wenn nicht gefunden, werfe eine hilfreiche Fehlermeldung
-            String message = String.format(
-                "Konfigurationsdatei nicht gefunden: %s%n" +
-                "Bitte erstellen Sie die Datei basierend auf config.properties.template",
-                configPath.toAbsolutePath()
-            );
-            throw new IOException(message);
-        }
-        
-        try (InputStream input = new FileInputStream(configPath.toFile())) {
-            properties.load(input);
-        }
-        
-        // Gib im Log (stdout) aus, aus welcher Datei die Konfiguration gelesen wurde
-        System.out.println("Konfiguration geladen aus Datei: " + configPath.toAbsolutePath().toString());
-        
-        // Validierung der erforderlichen Eigenschaften
-        validateRequired("server.url");
-        validateRequired("server.username");
-        validateRequired("server.password");
+    public OpenCloudConfig(String configFile) {
+    	try {
+	        properties = new Properties();
+	        
+	        // Bestimme den zu verwendenden Pfad
+	        Path configPath;
+	        if (configFile == null || configFile.trim().isEmpty()) {
+	            String userHome = System.getProperty("user.home");
+	            // Plattformunabhängig: Dateipfad im Home-Verzeichnis
+	            configPath = Paths.get(userHome).resolve(DEFAULT_CONFIG_FILE);
+	        } else {
+	            configPath = Paths.get(configFile);
+	            // Falls ein relativer Pfad übergeben wurde, mache ihn absolut
+	            if (!configPath.isAbsolute()) {
+	                configPath = configPath.toAbsolutePath();
+	            }
+	        }
+	        
+	        if (!Files.exists(configPath)) {
+	            // Wenn nicht gefunden, werfe eine hilfreiche Fehlermeldung
+	            String message = String.format(
+	                "Konfigurationsdatei nicht gefunden: %s%n" +
+	                "Bitte erstellen Sie die Datei basierend auf config.properties.template",
+	                configPath.toAbsolutePath()
+	            );
+	            throw new IOException(message);
+	        }
+	        
+	        try (InputStream input = new FileInputStream(configPath.toFile())) {
+	            properties.load(input);
+	        }
+	        
+	        // Gib im Log (stdout) aus, aus welcher Datei die Konfiguration gelesen wurde
+	        System.out.println("Konfiguration geladen aus Datei: " + configPath.toAbsolutePath().toString());
+	        
+	        // Validierung der erforderlichen Eigenschaften
+	        validateRequired("server.url");
+	        validateRequired("server.username");
+	        validateRequired("server.password");
+    	} catch (IOException e) {
+			throw new RuntimeException("Fehler beim Laden der Konfigurationsdatei: " + e.getMessage(), e);
+		}
     }
     
     private void validateRequired(String key) throws IOException {
