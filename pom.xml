@@ -52,7 +52,6 @@
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>3.3.0</version>
 				<configuration>
-					<name>opencloud-downloader</name>
 					<finalName>opencloud-downloader</finalName>
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
@@ -74,7 +73,6 @@
 					<execution>
 						<id>make-assembly-uploader</id>
 						<configuration>
-							<name>opencloud-uploader</name>
 							<finalName>opencloud-uploader</finalName>
 							<descriptorRefs>
 								<descriptorRef>jar-with-dependencies</descriptorRef>

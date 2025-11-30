@@ -2,13 +2,20 @@ package de.hechler.occlient.filesync;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
+
+import org.apache.http.Header;
+import org.apache.http.entity.ByteArrayEntity;
+import org.apache.http.message.BasicHeader;
 
 import com.github.sardine.DavResource;
 import com.github.sardine.Sardine;
 import com.github.sardine.SardineFactory;
+import com.github.sardine.impl.SardineImpl;
 
 public class OpenCloudClient {
 
@@ -50,6 +57,9 @@ public class OpenCloudClient {
 						long contentLength = r.getContentLength();
 						Date last_modified = r.getModified();
 						String md5 = r.getCustomProps().get("checksums") != null ? r.getCustomProps().get("checksums").replaceFirst(".*MD5[:]([a-fA-F0-9]{32}).*", "$1").toLowerCase() :  null;
+						if (name.endsWith("README3.md")) {
+							System.out.println("Found README3.md with md5: " + md5);
+						}
 						return new FileInfo(name, isDirectory, contentLength, last_modified, md5);
 					})
 					.collect(Collectors.toList());
@@ -145,6 +155,44 @@ public class OpenCloudClient {
 		try {
 			String fullPath = buildFullPath(path);
 			sardine.put(fullPath, data);
+		} catch (IOException e) {
+			throw new RuntimeException("Fehler beim Hochladen der Datei: " + path, e);
+		}
+	}
+
+	/**
+	 * Upload with explicit lastModified (ms since epoch). Attempts to set remote mtime
+	 * using the X-OC-Mtime header (seconds since epoch) which is supported by Nextcloud/ownCloud.
+	 * If the underlying Sardine implementation supports a put variant with headers it will be used.
+	 * Otherwise the header is ignored and a normal upload is performed.
+	 *
+	 * @param path         remote path
+	 * @param data         content bytes
+	 * @param lastModified local lastModified in milliseconds since epoch
+	 */
+	public void uploadFile(String path, byte[] data, long lastModified) {
+		String fullPath = buildFullPath(path);
+		try {
+			// X-OC-Mtime expects seconds
+			String mtime = Long.toString(lastModified / 1000L);
+			ByteArrayEntity entity = new ByteArrayEntity(data);
+			List<Header> headerList = new ArrayList<>();
+			headerList.add(new BasicHeader("X-OC-Mtime", mtime));
+			((SardineImpl)sardine).put(fullPath, entity, headerList);
+		} catch (RuntimeException re) {
+			throw re;
+		} catch (Exception e) {
+			throw new RuntimeException("Fehler beim Hochladen der Datei mit mtime: " + path, e);
+		}
+	}
+
+	/**
+	 * Upload with InputStream and lastModified (ms since epoch). Reads stream fully and delegates.
+	 */
+	public void uploadFile(String path, InputStream data, long lastModified) {
+		try {
+			byte[] bytes = data.readAllBytes();
+			uploadFile(path, bytes, lastModified);
 		} catch (IOException e) {
 			throw new RuntimeException("Fehler beim Hochladen der Datei: " + path, e);
 		}

@@ -1,0 +1,7 @@
+#SKIPWindows/JAVA/JDK17=C:\SkipWindows\JAVA\JDK17
+SKIPWindows/JAVA/SKIP=C:\SkipWindows\JAVA\SKIP
+SKIPWindows/swscripts=C:\SkipWindows\swscripts
+SKIPWindows/TEMP=C:\SkipWindows\TEMP
+
+
+

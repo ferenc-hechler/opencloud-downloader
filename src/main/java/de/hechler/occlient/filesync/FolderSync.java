@@ -266,9 +266,8 @@ public class FolderSync {
 						System.out.println("Uploading: " + p + " -> " + remotePath);
 						try (InputStream in = Files.newInputStream(p)) {
 							// ensure parent exists remotely
-							// (we assume parent exists because we created remoteFolder earlier)
-							client.uploadFile(remotePath, in);
-							// Note: cannot set remote lastModified easily via WebDAV here
+							// (we assume parent exists because we created remoteFolder früher)
+							client.uploadFile(remotePath, in, Files.getLastModifiedTime(p).toMillis());
 							remoteNames.add(name);
 						} catch (Exception e) {
 							System.err.println("Fehler beim Hochladen der Datei " + p + ": " + e.getMessage());
@@ -302,7 +301,7 @@ public class FolderSync {
 				entries = client.listFiles(remotePath);
 			} catch (Exception e) {
 				// might be a file or non-listable resource
-			}
+				}
 			if (entries != null && !entries.isEmpty()) {
 				for (OpenCloudClient.FileInfo fi : entries) {
 					String childRemote = remotePath.endsWith("/") ? remotePath + fi.name() : remotePath + "/" + fi.name();
