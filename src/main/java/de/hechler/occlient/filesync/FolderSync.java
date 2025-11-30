@@ -27,7 +27,7 @@ public class FolderSync {
 		// for comparison use file size and last modified date and md5 if available
 		// download missing files from remote to local
 		// delete local files not present in remote
-		System.out.println("Syncing local folder '" + localFolder + "' with remote folder '" + remoteFolder + "'");
+		System.out.println("Syncing local folder '" + localFolder + "' from remote folder '" + remoteFolder + "'");
 		
 		Path localPath = Paths.get(localFolder);
 		try {
@@ -160,6 +160,168 @@ public class FolderSync {
 			}
 		}
 		Files.deleteIfExists(path);
+	}
+
+	public void syncRemoteFolder(String remoteFolder, String localFolder) {
+		System.out.println("Syncing remote folder '" + remoteFolder + "' with local folder '" + localFolder + "'");
+		Path localPath = Paths.get(localFolder);
+		// If local doesn't exist -> remove remote
+		if (!Files.exists(localPath)) {
+			System.out.println("Local folder does not exist: " + localFolder + " -> deleting remote if exists");
+			try {
+				if (client.exists(remoteFolder)) {
+					deleteRemoteRecursively(remoteFolder);
+				}
+			} catch (Exception e) {
+				System.err.println("Error deleting remote folder " + remoteFolder + ": " + e.getMessage());
+			}
+			return;
+		}
+		
+		// ensure remote folder exists
+		try {
+			if (!client.exists(remoteFolder)) {
+				client.createDirectory(remoteFolder);
+			}
+		} catch (Exception e) {
+			throw new RuntimeException("Fehler beim Sicherstellen des Remote-Ordners: " + remoteFolder, e);
+		}
+		
+		// list remote entries
+		List<OpenCloudClient.FileInfo> remoteEntries;
+		try {
+			remoteEntries = client.listFiles(remoteFolder);
+		} catch (Exception e) {
+			throw new RuntimeException("Fehler beim Listen des Remote-Ordners: " + remoteFolder, e);
+		}
+		// map remote by name
+		Set<String> remoteNames = new HashSet<>();
+		for (OpenCloudClient.FileInfo fi : remoteEntries) {
+			remoteNames.add(fi.name());
+		}
+		
+		// iterate local entries and upload/update
+		try (DirectoryStream<Path> ds = Files.newDirectoryStream(localPath)) {
+			for (Path p : ds) {
+				String name = p.getFileName().toString();
+				String remotePath = remoteFolder.endsWith("/") ? remoteFolder + name : remoteFolder + "/" + name;
+				if (Files.isDirectory(p)) {
+					// local is directory
+					// if remote exists and is file -> delete remote file
+					OpenCloudClient.FileInfo rem = findRemote(remoteEntries, name);
+					try {
+						if (rem != null && !rem.isDirectory()) {
+							client.delete(remotePath);
+							remoteNames.remove(name);
+						}
+						// ensure remote dir exists
+						if (!client.exists(remotePath)) {
+							client.createDirectory(remotePath);
+						}
+						// recurse
+						syncRemoteFolder(remotePath, p.toString());
+					} catch (Exception e) {
+						System.err.println("Error syncing directory " + p + " -> " + remotePath + ": " + e.getMessage());
+					}
+				} else if (Files.isRegularFile(p)) {
+					// local is file -> determine upload needed
+					boolean upload = false;
+					OpenCloudClient.FileInfo rem = findRemote(remoteEntries, name);
+					try {
+						if (rem != null && rem.isDirectory()) {
+							// conflict: remote is directory -> delete it
+							deleteRemoteRecursively(remotePath);
+							upload = true;
+						} else if (rem == null) {
+							upload = true;
+						} else {
+							long localSize = Files.size(p);
+							long remoteSize = rem.contentLength();
+							long localLast = Files.getLastModifiedTime(p).toMillis();
+							long remoteLast = rem.last_modified() != null ? rem.last_modified().getTime() : 0L;
+							// rule: if same size AND same lastModified -> skip
+							if (localSize == remoteSize && remoteLast == localLast) {
+								upload = false;
+							} else if (localSize == remoteSize && rem.md5() != null) {
+								String localMd5 = ChecksumUtil.calculateMD5(p);
+								if (localMd5 != null && rem.md5().equalsIgnoreCase(localMd5)) {
+									upload = false;
+								} else {
+									upload = true;
+								}
+						} else {
+							upload = true;
+						}
+					}
+					} catch (IOException e) {
+						System.err.println("Fehler beim Prüfen der lokalen Datei: " + p + " - " + e.getMessage());
+						upload = true;
+					}
+					
+					if (upload) {
+						System.out.println("Uploading: " + p + " -> " + remotePath);
+						try (InputStream in = Files.newInputStream(p)) {
+							// ensure parent exists remotely
+							// (we assume parent exists because we created remoteFolder earlier)
+							client.uploadFile(remotePath, in);
+							// Note: cannot set remote lastModified easily via WebDAV here
+							remoteNames.add(name);
+						} catch (Exception e) {
+							System.err.println("Fehler beim Hochladen der Datei " + p + ": " + e.getMessage());
+						}
+					}
+				}
+			}
+		} catch (IOException e) {
+			throw new RuntimeException("Fehler beim Lesen des lokalen Ordners: " + localPath, e);
+		}
+		
+		// delete remote entries that do not exist locally
+		for (OpenCloudClient.FileInfo fi : remoteEntries) {
+			if (!Files.exists(localPath.resolve(fi.name()))) {
+				String remotePath = remoteFolder.endsWith("/") ? remoteFolder + fi.name() : remoteFolder + "/" + fi.name();
+				try {
+					deleteRemoteRecursively(remotePath);
+					System.out.println("Deleted remote entry not present locally: " + remotePath);
+				} catch (Exception e) {
+					System.err.println("Error deleting remote entry " + remotePath + ": " + e.getMessage());
+				}
+			}
+		}
+	}
+	
+	private void deleteRemoteRecursively(String remotePath) {
+		try {
+			// try listing; if it fails or returns empty, just delete the resource
+			List<OpenCloudClient.FileInfo> entries = null;
+			try {
+				entries = client.listFiles(remotePath);
+			} catch (Exception e) {
+				// might be a file or non-listable resource
+			}
+			if (entries != null && !entries.isEmpty()) {
+				for (OpenCloudClient.FileInfo fi : entries) {
+					String childRemote = remotePath.endsWith("/") ? remotePath + fi.name() : remotePath + "/" + fi.name();
+					if (fi.isDirectory()) {
+						deleteRemoteRecursively(childRemote);
+					} else {
+						client.delete(childRemote);
+					}
+				}
+			}
+			// finally delete the resource itself
+			client.delete(remotePath);
+		} catch (Exception e) {
+			throw new RuntimeException("Fehler beim rekursiven Löschen des Remote-Pfads: " + remotePath, e);
+		}
+	}
+	
+	private OpenCloudClient.FileInfo findRemote(List<OpenCloudClient.FileInfo> remoteEntries, String name) {
+		if (remoteEntries == null) return null;
+		for (OpenCloudClient.FileInfo fi : remoteEntries) {
+			if (fi.name().equals(name)) return fi;
+		}
+		return null;
 	}
 
 }

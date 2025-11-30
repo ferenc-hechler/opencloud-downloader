@@ -1,0 +1,6 @@
+SKIPWindows/swscripts=testdata\SkipWindows\swscripts
+#SKIPWindows/JAVA=testdata\SkipWindows\JAVA
+SKIPWindows/TEMP=testdata\SkipWindows\TEMP
+
+
+

@@ -6,7 +6,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.stream.Stream;
 
-public class Application {
+public class DownloaderMain {
 	
 	public static void main(String[] args) {
 		
@@ -17,13 +17,13 @@ public class Application {
 		
 		// Erwartet: Pfad zur Sync-Config-Datei (z.B. opencloud-downloader-syncs.txt)
 		if (args == null || args.length < 1) {
-			System.err.println("Usage: java -jar filesync.jar <sync-config-file>");
+			System.err.println("Usage: java -jar oc-downloader.jar <download-config-file>");
 			System.err.println("Each line in the config must have format: <localFolder>=<remoteFolder>");
 			System.exit(1);
 		}
 		
-		String syncConfigPath = args[0];
-		System.out.println("Using sync config: " + syncConfigPath);
+		String downloadConfigPath = args[0];
+		System.out.println("Using download config: " + downloadConfigPath);
 		
 		// Konfiguration aus Datei laden
 		OpenCloudConfig config;
@@ -45,9 +45,9 @@ public class Application {
 		
 		FolderSync folderSync = new FolderSync(client);
 		
-		Path cfg = Paths.get(syncConfigPath);
+		Path cfg = Paths.get(downloadConfigPath);
 		if (!Files.exists(cfg)) {
-			System.err.println("Sync config file not found: " + syncConfigPath);
+			System.err.println("Sync config file not found: " + downloadConfigPath);
 			System.exit(3);
 		}
 		
@@ -76,7 +76,7 @@ public class Application {
 					}
 				});
 		} catch (IOException e) {
-			System.err.println("Cannot read sync config file: " + syncConfigPath + " - " + e.getMessage());
+			System.err.println("Cannot read download config file: " + downloadConfigPath + " - " + e.getMessage());
 			System.exit(4);
 		} finally {
 			try {
