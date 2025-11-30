@@ -246,6 +246,10 @@ public class FolderSync {
 								String localMd5 = ChecksumUtil.calculateMD5(p);
 								if (localMd5 != null && rem.md5().equalsIgnoreCase(localMd5)) {
 									upload = false;
+									// set last modified time to remote's timestamp if available
+									if (rem.last_modified() != null) {
+										Files.setLastModifiedTime(p, FileTime.fromMillis(rem.last_modified().getTime()));
+									}
 								} else {
 									upload = true;
 								}
