@@ -1,29 +1,57 @@
 package de.hechler.occlient.filesync;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
-import java.util.stream.Stream;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.yaml.snakeyaml.LoaderOptions;
+import org.yaml.snakeyaml.Yaml;
+import org.yaml.snakeyaml.constructor.Constructor;
+
+import de.hechler.occlient.filesync.DownloaderMain.SyncConfig.SyncEntry;
 
 public class DownloaderMain {
 	
+	public static class SyncConfig {
+		public static class SyncEntry {
+			public String localFolder;
+			public String remoteFolder;
+			public List<String> ignore;
+		}
+		public List<SyncEntry> sync;
+	}		
+	
 	public static void main(String[] args) {
 		
-//		// test args
-//		if (args == null || args.length == 0) {
-//			args = new String[] { "opencloud-downloader-syncs-relative.txt" };
-//		}
+		// test args
+		if (args == null || args.length == 0) {
+			args = new String[] { "opencloud-downloader-sync-LENOVO.yaml" };
+		}
 		
 		// Erwartet: Pfad zur Sync-Config-Datei (z.B. opencloud-downloader-syncs.txt)
 		if (args == null || args.length < 1) {
-			System.err.println("Usage: java -jar oc-downloader.jar <download-config-file>");
-			System.err.println("Each line in the config must have format: <localFolder>=<remoteFolder>");
+			System.err.println("Usage: java -jar oc-downloader.jar <config-yaml>");
+			System.err.println("------- YAML SYNTAX -------");
+			System.err.println("sync:");
+			System.err.println("  - localFolder: <local-folder1>");
+			System.err.println("    remoteFolder: <remote-folder1>");
+			System.err.println("    ignore:");
+			System.err.println("      - <glob-pattern-to-ignore1>");
+			System.err.println("      - <glob-pattern-to-ignore2>");
+			System.err.println("  - localFolder: <local-folder2>");
+			System.err.println("    remoteFolder: <remote-folder2>");
+			System.err.println("------- ----------- -------");
 			System.exit(1);
 		}
 		
-		String downloadConfigPath = args[0];
-		System.out.println("Using download config: " + downloadConfigPath);
+		String syncConfigYaml = args[0];
+		System.out.println("Using sync config yaml: " + syncConfigYaml);
 		
 		// Konfiguration aus Datei laden
 		OpenCloudConfig config;
@@ -45,43 +73,41 @@ public class DownloaderMain {
 		
 		FolderSync folderSync = new FolderSync(client);
 		
-		Path cfg = Paths.get(downloadConfigPath);
-		if (!Files.exists(cfg)) {
-			System.err.println("Sync config file not found: " + downloadConfigPath);
+		SyncConfig sConf = readSyncConfg(syncConfigYaml);
+		
+		for (SyncEntry sync : sConf.sync) {
+			String localFolder = sync.localFolder;
+			String remoteFolder = sync.remoteFolder;
+			System.out.println("Processing mapping: remote='" + remoteFolder + "' -> local='" + localFolder + "'");
+			if (localFolder.isEmpty() || remoteFolder.isEmpty()) {
+				System.err.println("invalid mapping " + remoteFolder + " -> " + localFolder);
+				System.exit(6);
+			}
+			List<PathMatcher> ignores = null;
+			if (sync.ignore != null) {
+				ignores = new ArrayList<>();
+				for (String ignorePattern : sync.ignore) {
+					ignores.add(FileSystems.getDefault().getPathMatcher("glob:" + ignorePattern));
+				}
+			}
+			folderSync.syncLocalFolder(localFolder, remoteFolder, ignores);
+		}
+	}
+
+	private static SyncConfig readSyncConfg(String syncConfigYaml) {
+		Path path = Paths.get(syncConfigYaml);
+		if (!Files.exists(path)) {
+			System.err.println("Sync config yaml not found: " + syncConfigYaml);
 			System.exit(3);
 		}
-		
-		try (Stream<String> lines = Files.lines(cfg)) {
-			lines.map(String::trim)
-			     .filter(l -> !l.isEmpty())
-			     .filter(l -> !l.startsWith("#") && !l.startsWith("//"))
-			     .forEach(line -> {
-					int eq = line.indexOf('=');
-					if (eq <= 0) {
-						System.err.println("Skipping invalid line (no '='): " + line);
-						return;
-					}
-					String localFolder = line.substring(0, eq).trim();
-					String remoteFolder = line.substring(eq + 1).trim();
-					if (localFolder.isEmpty() || remoteFolder.isEmpty()) {
-						System.err.println("Skipping invalid mapping (empty side): " + line);
-						return;
-					}
-					System.out.println("Processing mapping: local='" + localFolder + "' -> remote='" + remoteFolder + "'");
-					try {
-						folderSync.syncLocalFolder(localFolder, remoteFolder);
-					} catch (Exception e) {
-						System.err.println("Error syncing mapping '" + line + "': " + e.getMessage());
-						e.printStackTrace();
-					}
-				});
+		Yaml yaml = new Yaml(new Constructor(SyncConfig.class, new LoaderOptions()));
+		try (InputStream is = Files.newInputStream(path)) {
+			SyncConfig syncConfig = yaml.load(is);
+			return syncConfig;
 		} catch (IOException e) {
-			System.err.println("Cannot read download config file: " + downloadConfigPath + " - " + e.getMessage());
+			System.err.println("Error reading sync config yaml: " + e.getMessage());
 			System.exit(4);
-		} finally {
-			try {
-				client.close();
-			} catch (Exception ignore) {}
 		}
+		return null; // never reached
 	}
 }

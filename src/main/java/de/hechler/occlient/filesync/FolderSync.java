@@ -3,8 +3,10 @@ package de.hechler.occlient.filesync;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
+import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.PathMatcher;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.nio.file.attribute.FileTime;
@@ -20,7 +22,7 @@ public class FolderSync {
 		this.client = client;
 	}
 
-	public void syncLocalFolder(String localFolder, String remoteFolder) {
+	public void syncLocalFolder(String localFolder, String remoteFolder, List<PathMatcher> ignorePatterns) {
 		// check local folder, create if not exists
 		// update local folder to match remote folder
 		// compare local and remote files and sync
@@ -49,6 +51,9 @@ public class FolderSync {
 		// Sammle Remote-Namen für Lösch-Entscheidung
 		Set<String> remoteNames = new HashSet<>();
 		for (OpenCloudClient.FileInfo fi : remoteEntries) {
+			if (checkIgnore(fi.name(), ignorePatterns)) {
+				continue;
+			}
 			remoteNames.add(fi.name());
 			Path target = localPath.resolve(fi.name());
 			if (fi.isDirectory()) {
@@ -63,7 +68,7 @@ public class FolderSync {
 					}
 					// build remote child path
 					String childRemote = remoteFolder.endsWith("/") ? remoteFolder + fi.name() : remoteFolder + "/" + fi.name();
-					syncLocalFolder(target.toString(), childRemote);
+					syncLocalFolder(target.toString(), childRemote, ignorePatterns);
 				} catch (IOException e) {
 					System.err.println("Fehler beim Erstellen/Syncen von Verzeichnis: " + target + " - " + e.getMessage());
 				}
@@ -137,6 +142,9 @@ public class FolderSync {
 			for (Path p : ds) {
 				String name = p.getFileName().toString();
 				if (!remoteNames.contains(name)) {
+					if (checkIgnore(name, ignorePatterns)) {
+						continue;
+					}
 					// delete file or directory recursively
 					try {
 						deleteRecursively(p);
@@ -151,6 +159,18 @@ public class FolderSync {
 		}
 	}
 	
+	private boolean checkIgnore(String name, List<PathMatcher> ignorePatterns) {
+		if (ignorePatterns == null) {
+			return false;
+		}
+		for (PathMatcher pattern : ignorePatterns) {
+			if (pattern.matches(Paths.get(name))) {
+				return true;
+			}
+		}
+		return false;
+	}
+
 	private void deleteRecursively(Path path) throws IOException {
 		if (Files.isDirectory(path)) {
 			try (DirectoryStream<Path> ds = Files.newDirectoryStream(path)) {
