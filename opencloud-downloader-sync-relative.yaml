@@ -1,13 +1,13 @@
 sync:
   #- localFolder: testdata\SkipWindows2\JAVA\SKIP
-  #  remoteFolder: SKIPWindows2/JAVA/SKIP
+  #  remoteFolder: SKIPWindows/JAVA/SKIP
   #  ignore:
   #    - SKIP.properties
   #- localFolder: testdata\SkipWindows2\swscripts
-  #  remoteFolder: SKIPWindows2/swscripts
+  #  remoteFolder: SKIPWindows/swscripts
   - localFolder: testdata\SkipWindows2\TEMP
-    remoteFolder: SKIPWindows2/TEMP
+    remoteFolder: SKIPWindows/TEMP
     ignore:
       - README-*.md
   #- localFolder: testdata\SkipWindows2\JAVA\JDK17
-  #  remoteFolder: SKIPWindows2/JAVA/JDK17
+  #  remoteFolder: SKIPWindows/JAVA/JDK17
