@@ -31,7 +31,8 @@ public class DownloaderMain {
 		
 		// test args
 		if (args == null || args.length == 0) {
-			args = new String[] { "opencloud-downloader-sync-LENOVO.yaml" };
+//			args = new String[] { "opencloud-downloader-sync-LENOVO.yaml" };
+			args = new String[] { "opencloud-downloader-sync-relative.yaml" };
 		}
 		
 		// Erwartet: Pfad zur Sync-Config-Datei (z.B. opencloud-downloader-syncs.txt)

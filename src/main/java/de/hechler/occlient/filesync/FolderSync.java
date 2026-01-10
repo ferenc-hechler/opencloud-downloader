@@ -70,7 +70,7 @@ public class FolderSync {
 					String childRemote = remoteFolder.endsWith("/") ? remoteFolder + fi.name() : remoteFolder + "/" + fi.name();
 					syncLocalFolder(target.toString(), childRemote, ignorePatterns);
 				} catch (IOException e) {
-					System.err.println("Fehler beim Erstellen/Syncen von Verzeichnis: " + target + " - " + e.getMessage());
+					System.err.println("  Fehler beim Erstellen/Syncen von Verzeichnis: " + target + " - " + e.getMessage());
 				}
 			} else {
 				// file: decide whether to download
@@ -105,13 +105,13 @@ public class FolderSync {
 						}
 					}
 				} catch (IOException e) {
-					System.err.println("Fehler beim Prüfen der lokalen Datei: " + target + " - " + e.getMessage());
+					System.err.println("  Fehler beim Prüfen der lokalen Datei: " + target + " - " + e.getMessage());
 					download = true;
 				}
 
 				if (download) {
 					String remoteFilePath = remoteFolder.endsWith("/") ? remoteFolder + fi.name() : remoteFolder + "/" + fi.name();
-					System.out.println("Downloading: " + remoteFilePath + " -> " + target);
+					System.out.println("  Downloading: " + remoteFilePath + " -> " + target);
 					try (InputStream in = client.downloadFile(remoteFilePath)) {
 						// ensure parent exists
 						if (target.getParent() != null && !Files.exists(target.getParent())) {
@@ -131,7 +131,7 @@ public class FolderSync {
 							Files.setLastModifiedTime(target, FileTime.fromMillis(fi.last_modified().getTime()));
 						}
 					} catch (Exception e) {
-						System.err.println("Fehler beim Herunterladen der Datei " + remoteFilePath + ": " + e.getMessage());
+						System.err.println("  Fehler beim Herunterladen der Datei " + remoteFilePath + ": " + e.getMessage());
 					}
 				}
 			}
@@ -141,21 +141,21 @@ public class FolderSync {
 		try (DirectoryStream<Path> ds = Files.newDirectoryStream(localPath)) {
 			for (Path p : ds) {
 				String name = p.getFileName().toString();
+				if (checkIgnore(name, ignorePatterns)) {
+					continue;
+				}
 				if (!remoteNames.contains(name)) {
-					if (checkIgnore(name, ignorePatterns)) {
-						continue;
-					}
 					// delete file or directory recursively
 					try {
 						deleteRecursively(p);
-						System.out.println("Deleted local entry not present on remote: " + p);
+						System.out.println("  Deleted local entry not present on remote: " + p);
 					} catch (IOException e) {
-						System.err.println("Fehler beim Löschen lokaler Datei/Verzeichnis: " + p + " - " + e.getMessage());
+						System.err.println("  Fehler beim Löschen lokaler Datei/Verzeichnis: " + p + " - " + e.getMessage());
 					}
 				}
 			}
 		} catch (IOException e) {
-			System.err.println("Fehler beim Auflisten des lokalen Ordners: " + localPath + " - " + e.getMessage());
+			System.err.println("  Fehler beim Auflisten des lokalen Ordners: " + localPath + " - " + e.getMessage());
 		}
 	}
 	
@@ -187,13 +187,13 @@ public class FolderSync {
 		Path localPath = Paths.get(localFolder);
 		// If local doesn't exist -> remove remote
 		if (!Files.exists(localPath)) {
-			System.out.println("Local folder does not exist: " + localFolder + " -> deleting remote if exists");
+			System.out.println("  Local folder does not exist: " + localFolder + " -> deleting remote if exists");
 			try {
 				if (client.exists(remoteFolder)) {
 					deleteRemoteRecursively(remoteFolder);
 				}
 			} catch (Exception e) {
-				System.err.println("Error deleting remote folder " + remoteFolder + ": " + e.getMessage());
+				System.err.println("  Error deleting remote folder " + remoteFolder + ": " + e.getMessage());
 			}
 			return;
 		}
@@ -241,7 +241,7 @@ public class FolderSync {
 						// recurse
 						syncRemoteFolder(remotePath, p.toString());
 					} catch (Exception e) {
-						System.err.println("Error syncing directory " + p + " -> " + remotePath + ": " + e.getMessage());
+						System.err.println("  Error syncing directory " + p + " -> " + remotePath + ": " + e.getMessage());
 					}
 				} else if (Files.isRegularFile(p)) {
 					// local is file -> determine upload needed
@@ -278,19 +278,19 @@ public class FolderSync {
 						}
 					}
 					} catch (IOException e) {
-						System.err.println("Fehler beim Prüfen der lokalen Datei: " + p + " - " + e.getMessage());
+						System.err.println("  Fehler beim Prüfen der lokalen Datei: " + p + " - " + e.getMessage());
 						upload = true;
 					}
 					
 					if (upload) {
-						System.out.println("Uploading: " + p + " -> " + remotePath);
+						System.out.println("  Uploading: " + p + " -> " + remotePath);
 						try (InputStream in = Files.newInputStream(p)) {
 							// ensure parent exists remotely
 							// (we assume parent exists because we created remoteFolder früher)
 							client.uploadFile(remotePath, in, Files.getLastModifiedTime(p).toMillis());
 							remoteNames.add(name);
 						} catch (Exception e) {
-							System.err.println("Fehler beim Hochladen der Datei " + p + ": " + e.getMessage());
+							System.err.println("  Fehler beim Hochladen der Datei " + p + ": " + e.getMessage());
 						}
 					}
 				}
@@ -305,9 +305,9 @@ public class FolderSync {
 				String remotePath = remoteFolder.endsWith("/") ? remoteFolder + fi.name() : remoteFolder + "/" + fi.name();
 				try {
 					deleteRemoteRecursively(remotePath);
-					System.out.println("Deleted remote entry not present locally: " + remotePath);
+					System.out.println("  Deleted remote entry not present locally: " + remotePath);
 				} catch (Exception e) {
-					System.err.println("Error deleting remote entry " + remotePath + ": " + e.getMessage());
+					System.err.println("  Error deleting remote entry " + remotePath + ": " + e.getMessage());
 				}
 			}
 		}
