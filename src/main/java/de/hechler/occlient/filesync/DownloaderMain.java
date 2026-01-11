@@ -1,15 +1,5 @@
 package de.hechler.occlient.filesync;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
-import org.yaml.snakeyaml.LoaderOptions;
-import org.yaml.snakeyaml.Yaml;
-import org.yaml.snakeyaml.constructor.Constructor;
-
 import de.hechler.occlient.filesync.SyncConfig.SyncEntry;
 
 

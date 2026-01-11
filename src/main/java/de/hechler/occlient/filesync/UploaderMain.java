@@ -1,29 +1,34 @@
 package de.hechler.occlient.filesync;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.stream.Stream;
+import de.hechler.occlient.filesync.SyncConfig.SyncEntry;
 
 public class UploaderMain {
 	
 	public static void main(String[] args) {
 		
 //		// test args
-//		if (args == null || args.length == 0) {
-//			args = new String[] { "opencloud-uploader-syncs-relative.txt" };
-//		}
+		if (args == null || args.length == 0) {
+			args = new String[] { "opencloud-uploader-sync-relative.yaml" };
+		}
 		
-		// Erwartet: Pfad zur Sync-Config-Datei (z.B. opencloud-uploader-syncs.txt)
+		// Erwartet: Pfad zur Sync-Config-Datei (z.B. opencloud-downloader-syncs.txt)
 		if (args == null || args.length < 1) {
-			System.err.println("Usage: java -jar oc-uploader.jar <upload-config-file>");
-			System.err.println("Each line in the config must have format: <remoteFolder>=<localFolder>");
+			System.err.println("Usage: java -jar oc-uploader.jar <config-yaml>");
+			System.err.println("------- YAML SYNTAX -------");
+			System.err.println("sync:");
+			System.err.println("  - localFolder: <local-folder1>");
+			System.err.println("    remoteFolder: <remote-folder1>");
+			System.err.println("    ignore:");
+			System.err.println("      - <glob-pattern-to-ignore1>");
+			System.err.println("      - <glob-pattern-to-ignore2>");
+			System.err.println("  - localFolder: <local-folder2>");
+			System.err.println("    remoteFolder: <remote-folder2>");
+			System.err.println("------- ----------- -------");
 			System.exit(1);
 		}
 		
-		String uploadConfigPath = args[0];
-		System.out.println("Using upload config: " + uploadConfigPath);
+		String syncConfigYaml = args[0];
+		System.out.println("Using sync config yaml: " + syncConfigYaml);
 		
 		// Konfiguration aus Datei laden
 		OpenCloudConfig config;
@@ -45,43 +50,18 @@ public class UploaderMain {
 		
 		FolderSync folderSync = new FolderSync(client);
 		
-		Path cfg = Paths.get(uploadConfigPath);
-		if (!Files.exists(cfg)) {
-			System.err.println("Sync config file not found: " + uploadConfigPath);
-			System.exit(3);
+		SyncConfig sConf = SyncConfig.load(syncConfigYaml);
+		
+		for (SyncEntry sync : sConf.sync) {
+			String localFolder = sync.localFolder;
+			String remoteFolder = sync.remoteFolder;
+			System.out.println("Processing mapping: local='" + localFolder + "' -> remote='" + remoteFolder + "'");
+			if (localFolder.isEmpty() || remoteFolder.isEmpty()) {
+				System.err.println("invalid mapping " + remoteFolder + " -> " + localFolder);
+				System.exit(6);
+			}
+			folderSync.syncRemoteFolder(remoteFolder, localFolder, sync.getIgnoreMatchers());
 		}
 		
-		try (Stream<String> lines = Files.lines(cfg)) {
-			lines.map(String::trim)
-			     .filter(l -> !l.isEmpty())
-			     .filter(l -> !l.startsWith("#") && !l.startsWith("//"))
-			     .forEach(line -> {
-					int eq = line.indexOf('=');
-					if (eq <= 0) {
-						System.err.println("Skipping invalid line (no '='): " + line);
-						return;
-					}
-					String remoteFolder = line.substring(0, eq).trim();
-					String localFolder = line.substring(eq + 1).trim();
-					if (localFolder.isEmpty() || remoteFolder.isEmpty()) {
-						System.err.println("Skipping invalid mapping (empty side): " + line);
-						return;
-					}
-					System.out.println("Processing mapping: remote='" + remoteFolder + "' -> local='" + localFolder + "'");
-					try {
-						folderSync.syncRemoteFolder(remoteFolder, localFolder);
-					} catch (Exception e) {
-						System.err.println("Error syncing mapping '" + line + "': " + e.getMessage());
-						e.printStackTrace();
-					}
-				});
-		} catch (IOException e) {
-			System.err.println("Cannot read upload config file: " + uploadConfigPath + " - " + e.getMessage());
-			System.exit(4);
-		} finally {
-			try {
-				client.close();
-			} catch (Exception ignore) {}
-		}
 	}
 }

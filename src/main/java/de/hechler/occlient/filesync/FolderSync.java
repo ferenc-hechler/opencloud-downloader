@@ -182,7 +182,7 @@ public class FolderSync {
 		Files.deleteIfExists(path);
 	}
 
-	public void syncRemoteFolder(String remoteFolder, String localFolder) {
+	public void syncRemoteFolder(String remoteFolder, String localFolder, List<PathMatcher> ignorePatterns) {
 		System.out.println("Syncing remote folder '" + remoteFolder + "' with local folder '" + localFolder + "'");
 		Path localPath = Paths.get(localFolder);
 		// If local doesn't exist -> remove remote
@@ -217,6 +217,9 @@ public class FolderSync {
 		// map remote by name
 		Set<String> remoteNames = new HashSet<>();
 		for (OpenCloudClient.FileInfo fi : remoteEntries) {
+			if (checkIgnore(fi.name(), ignorePatterns)) {
+				continue;
+			}
 			remoteNames.add(fi.name());
 		}
 		
@@ -224,6 +227,9 @@ public class FolderSync {
 		try (DirectoryStream<Path> ds = Files.newDirectoryStream(localPath)) {
 			for (Path p : ds) {
 				String name = p.getFileName().toString();
+				if (checkIgnore(name, ignorePatterns)) {
+					continue;
+				}
 				String remotePath = remoteFolder.endsWith("/") ? remoteFolder + name : remoteFolder + "/" + name;
 				if (Files.isDirectory(p)) {
 					// local is directory
@@ -239,7 +245,7 @@ public class FolderSync {
 							client.createDirectory(remotePath);
 						}
 						// recurse
-						syncRemoteFolder(remotePath, p.toString());
+						syncRemoteFolder(remotePath, p.toString(), ignorePatterns);
 					} catch (Exception e) {
 						System.err.println("  Error syncing directory " + p + " -> " + remotePath + ": " + e.getMessage());
 					}
@@ -301,6 +307,9 @@ public class FolderSync {
 		
 		// delete remote entries that do not exist locally
 		for (OpenCloudClient.FileInfo fi : remoteEntries) {
+			if (checkIgnore(fi.name(), ignorePatterns)) {
+				continue;
+			}
 			if (!Files.exists(localPath.resolve(fi.name()))) {
 				String remotePath = remoteFolder.endsWith("/") ? remoteFolder + fi.name() : remoteFolder + "/" + fi.name();
 				try {
