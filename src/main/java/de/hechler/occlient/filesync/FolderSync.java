@@ -90,6 +90,11 @@ public class FolderSync {
 					} else {
 						long localSize = Files.size(target);
 						long remoteSize = fi.contentLength();
+						
+						if (decryptPassphrase != null) {
+							localSize = EncryptedInputStream.getEncryptedSizeForInputSize(localSize);
+						}
+						
 						long localLast = Files.getLastModifiedTime(target).toMillis();
 						long remoteLast = fi.last_modified() != null ? fi.last_modified().getTime() : 0L;
 						// consider difference if size differs or remote newer (allow small clock skew)
@@ -100,7 +105,7 @@ public class FolderSync {
 						}
 						if (download && (localSize == remoteSize) && fi.md5() != null) {
 							// if md5 available, check it
-							String localMd5 = ChecksumUtil.calculateMD5dec(target, decryptPassphrase);
+							String localMd5 = ChecksumUtil.calculateMD5enc(target, decryptPassphrase);
 							if (fi.md5().equalsIgnoreCase(localMd5)) {
 								download = false;
 								// set last modified time to remote's timestamp if available
