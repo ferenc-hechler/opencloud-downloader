@@ -18,8 +18,7 @@ public final class ChecksumUtil {
 
     public static String calculateMD5enc(Path path, String encryptPassphrase) {
     	if (encryptPassphrase != null) {
-			// TODO: return calcEncryptedMD5(path, encryptPassphrase);
-    		return null;
+			return calcEncryptedMD5(path, encryptPassphrase);
 		} else {
 			return calculateMD5(path);
 		}
@@ -27,8 +26,7 @@ public final class ChecksumUtil {
     
     public static String calculateMD5dec(Path path, String decryptPassphrase) {
     	if (decryptPassphrase != null) {
-			// TODO: return calcDecryptedMD5(path, decryptPassphrase);
-    		return null;
+			return calcDecryptedMD5(path, decryptPassphrase);
 		} else {
 			return calculateMD5(path);
 		}
@@ -182,14 +180,51 @@ public final class ChecksumUtil {
             
             // Konvertiere MD5 zu Hex-String
             byte[] digest = md.digest();
-            StringBuilder sb = new StringBuilder();
-            for (byte b : digest) {
-                sb.append(String.format("%02x", b));
-            }
-            return sb.toString();
+            return toHexString(digest);
             
         } catch (Exception e) {
             System.err.println("Fehler beim Berechnen des verschlüsselten MD5 für " + inputPath + ": " + e.getMessage());
+            return null;
+        }
+    }
+    
+    /**
+     * Berechnet den MD5-Hash einer verschlüsselten Datei nach der Entschlüsselung.
+     * Dies ist nützlich, um den Hash der entschlüsselten Version zu berechnen,
+     * ohne die Datei tatsächlich auf die Festplatte zu schreiben.
+     * 
+     * @param inputPath Pfad zur verschlüsselten Datei
+     * @param passphrase Passphrase für die Entschlüsselung
+     * @return MD5-Hash als Hex-String oder null bei Fehler
+     */
+    public static String calcDecryptedMD5(Path inputPath, String passphrase) {
+        if (inputPath == null || !Files.exists(inputPath)) {
+            System.err.println("Input file does not exist: " + inputPath);
+            return null;
+        }
+        if (passphrase == null || passphrase.isEmpty()) {
+            throw new IllegalArgumentException("Passphrase darf nicht leer sein");
+        }
+        
+        try {
+            MessageDigest md = MessageDigest.getInstance("MD5");
+            
+            try (InputStream encryptedInput = Files.newInputStream(inputPath);
+                 DecryptedInputStream decryptedInput = new DecryptedInputStream(encryptedInput, passphrase);
+                 DigestInputStream digestInput = new DigestInputStream(decryptedInput, md)) {
+                
+                byte[] buffer = new byte[8192];
+                while (digestInput.read(buffer) != -1) {
+                    // Daten werden durch DigestInputStream gelesen und MD5 wird berechnet
+                }
+            }
+            
+            // Konvertiere MD5 zu Hex-String
+            byte[] digest = md.digest();
+            return toHexString(digest);
+            
+        } catch (Exception e) {
+            System.err.println("Fehler beim Berechnen des entschlüsselten MD5 für " + inputPath + ": " + e.getMessage());
             return null;
         }
     }

@@ -273,6 +273,10 @@ public class FolderSync {
 						} else {
 							long localSize = Files.size(p);
 							long remoteSize = rem.contentLength();
+							if (encryptPassphrase != null) {
+								localSize = EncryptedInputStream.getEncryptedSizeForInputSize(localSize);
+							}
+							System.out.println("Comparing local file " + p + " (size=" + localSize + ") with remote " + remotePath + " (size=" + remoteSize + ")");
 							long localLast = Files.getLastModifiedTime(p).toMillis();
 							long remoteLast = rem.last_modified() != null ? rem.last_modified().getTime() : 0L;
 							// rule: if same size AND same lastModified -> skip

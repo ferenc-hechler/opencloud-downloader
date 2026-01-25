@@ -163,4 +163,32 @@ public class EncryptedInputStream extends FilterInputStream {
     public boolean markSupported() {
         return false;
     }
+
+	/**
+	 * Berechnet die Größe der verschlüsselten Datei basierend auf der Größe der Eingabedatei.
+	 * 
+	 * Die verschlüsselte Datei enthält:
+	 * - Salt (16 Bytes)
+	 * - IV (16 Bytes)
+	 * - Verschlüsselte Daten mit PKCS5-Padding (aufgerundet auf 16-Byte-Blöcke)
+	 * 
+	 * @param inputSize Größe der Eingabedatei in Bytes
+	 * @return Größe der verschlüsselten Datei in Bytes
+	 */
+	public static long getEncryptedSizeForInputSize(long inputSize) {
+		if (inputSize < 0) {
+			throw new IllegalArgumentException("Input size cannot be negative");
+		}
+		
+		// Header: Salt (16 Bytes) + IV (16 Bytes)
+		long headerSize = SALT_LENGTH + IV_LENGTH;
+		
+		// PKCS5-Padding: Daten werden auf 16-Byte-Blöcke aufgefüllt
+		// Es wird IMMER mindestens 1 Byte Padding hinzugefügt (1-16 Bytes)
+		// Wenn die Größe bereits ein Vielfaches von 16 ist, wird ein kompletter Block (16 Bytes) hinzugefügt
+		int blockSize = 16;
+		long paddedSize = inputSize + blockSize - (inputSize % blockSize);
+		
+		return headerSize + paddedSize;
+	}
 }
