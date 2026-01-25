@@ -1,6 +1,7 @@
 package de.hechler.occlient.filesync;
 
 import de.hechler.occlient.filesync.SyncConfig.SyncEntry;
+import de.hechler.occlient.filesync.SyncConfig.SyncTransformType;
 
 
 public class DownloaderMain {
@@ -58,12 +59,13 @@ public class DownloaderMain {
 		for (SyncEntry sync : sConf.sync) {
 			String localFolder = sync.localFolder;
 			String remoteFolder = sync.remoteFolder;
-			System.out.println("Processing mapping: remote='" + remoteFolder + "' -> local='" + localFolder + "'");
+			String decryptPassphrase = sync.transform != null && sync.transform.type == SyncTransformType.decrypt ? sync.transform.passphrase : null;
+			System.out.println("Processing mapping: remote='" + remoteFolder + "' -> local='" + localFolder + "'"+ (decryptPassphrase != null ? " (decryption enabled)" : ""));
 			if (localFolder.isEmpty() || remoteFolder.isEmpty()) {
 				System.err.println("invalid mapping " + remoteFolder + " -> " + localFolder);
 				System.exit(6);
 			}
-			folderSync.syncLocalFolder(localFolder, remoteFolder, sync.getIgnoreMatchers());
+			folderSync.syncLocalFolder(localFolder, remoteFolder, sync.getIgnoreMatchers(), decryptPassphrase);
 		}
 	}
 

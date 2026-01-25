@@ -16,10 +16,23 @@ import org.yaml.snakeyaml.constructor.Constructor;
 
 
 public class SyncConfig {
+
+		
+	public enum SyncTransformType {
+		none,
+		encrypt,
+		decrypt
+	}
+	
+	public static class SyncTransform {
+		public SyncTransformType type;
+		public String passphrase;
+	}
 	
 	public static class SyncEntry {
 		public String localFolder;
 		public String remoteFolder;
+		public SyncTransform transform;
 		public List<String> ignore;
 		private List<PathMatcher> ignoreMatchers;
 		public List<PathMatcher> getIgnoreMatchers() {

@@ -5,9 +5,18 @@ sync:
   #    - SKIP.properties
   #- localFolder: testdata\SkipWindows2\swscripts
   #  remoteFolder: SKIPWindows/swscripts
-  - localFolder: testdata\SkipWindows2\TEMP
-    remoteFolder: SKIPWindows/TEMP
+  #- localFolder: testdata\SkipWindows2\TEMP
+  #  remoteFolder: SKIPWindows2/TEMP
+  #  ignore:
+  #    - README-*.txt
+  #    - README-*.md
+  - remoteFolder: SKIPWindows2/TEMPenc
+    localFolder: testdata\SkipWindows2\TEMPdec
     ignore:
       - README-*.md
+    transform: 
+      type: decrypt
+      passphrase: aSecretPassphrase!53
+
   #- localFolder: testdata\SkipWindows2\JAVA\JDK17
   #  remoteFolder: SKIPWindows/JAVA/JDK17

@@ -3,7 +3,6 @@ package de.hechler.occlient.filesync;
 import java.io.IOException;
 import java.io.InputStream;
 import java.nio.file.DirectoryStream;
-import java.nio.file.FileSystems;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
@@ -17,12 +16,18 @@ import java.util.Set;
 public class FolderSync {
 
 	protected OpenCloudClient client;
+	protected String passphrase;
 	
 	public FolderSync(OpenCloudClient client) {
-		this.client = client;
+		this(client, null);
 	}
 
-	public void syncLocalFolder(String localFolder, String remoteFolder, List<PathMatcher> ignorePatterns) {
+	public FolderSync(OpenCloudClient client, String passphrase) {
+		this.client = client;
+		this.passphrase = passphrase;
+	}
+
+	public void syncLocalFolder(String localFolder, String remoteFolder, List<PathMatcher> ignorePatterns, String decryptPassphrase) {
 		// check local folder, create if not exists
 		// update local folder to match remote folder
 		// compare local and remote files and sync
@@ -68,7 +73,7 @@ public class FolderSync {
 					}
 					// build remote child path
 					String childRemote = remoteFolder.endsWith("/") ? remoteFolder + fi.name() : remoteFolder + "/" + fi.name();
-					syncLocalFolder(target.toString(), childRemote, ignorePatterns);
+					syncLocalFolder(target.toString(), childRemote, ignorePatterns, decryptPassphrase);
 				} catch (IOException e) {
 					System.err.println("  Fehler beim Erstellen/Syncen von Verzeichnis: " + target + " - " + e.getMessage());
 				}
@@ -95,7 +100,7 @@ public class FolderSync {
 						}
 						if (download && (localSize == remoteSize) && fi.md5() != null) {
 							// if md5 available, check it
-							String localMd5 = ChecksumUtil.calculateMD5(target);
+							String localMd5 = ChecksumUtil.calculateMD5dec(target, decryptPassphrase);
 							if (fi.md5().equalsIgnoreCase(localMd5)) {
 								download = false;
 								// set last modified time to remote's timestamp if available
@@ -112,7 +117,12 @@ public class FolderSync {
 				if (download) {
 					String remoteFilePath = remoteFolder.endsWith("/") ? remoteFolder + fi.name() : remoteFolder + "/" + fi.name();
 					System.out.println("  Downloading: " + remoteFilePath + " -> " + target);
-					try (InputStream in = client.downloadFile(remoteFilePath)) {
+					try (InputStream fin = client.downloadFile(remoteFilePath)) {
+						InputStream in = fin;
+						if (decryptPassphrase != null) {
+							// wrap input stream with decryption
+							in = new DecryptedInputStream(in, decryptPassphrase);
+						}
 						// ensure parent exists
 						if (target.getParent() != null && !Files.exists(target.getParent())) {
 							Files.createDirectories(target.getParent());
@@ -182,7 +192,7 @@ public class FolderSync {
 		Files.deleteIfExists(path);
 	}
 
-	public void syncRemoteFolder(String remoteFolder, String localFolder, List<PathMatcher> ignorePatterns) {
+	public void syncRemoteFolder(String remoteFolder, String localFolder, List<PathMatcher> ignorePatterns, String encryptPassphrase) {
 		System.out.println("Syncing remote folder '" + remoteFolder + "' with local folder '" + localFolder + "'");
 		Path localPath = Paths.get(localFolder);
 		// If local doesn't exist -> remove remote
@@ -245,7 +255,7 @@ public class FolderSync {
 							client.createDirectory(remotePath);
 						}
 						// recurse
-						syncRemoteFolder(remotePath, p.toString(), ignorePatterns);
+						syncRemoteFolder(remotePath, p.toString(), ignorePatterns, encryptPassphrase);
 					} catch (Exception e) {
 						System.err.println("  Error syncing directory " + p + " -> " + remotePath + ": " + e.getMessage());
 					}
@@ -269,7 +279,7 @@ public class FolderSync {
 							if (localSize == remoteSize && remoteLast == localLast) {
 								upload = false;
 							} else if (localSize == remoteSize && rem.md5() != null) {
-								String localMd5 = ChecksumUtil.calculateMD5(p);
+								String localMd5 = ChecksumUtil.calculateMD5enc(p, encryptPassphrase);
 								if (localMd5 != null && rem.md5().equalsIgnoreCase(localMd5)) {
 									upload = false;
 									// set last modified time to remote's timestamp if available
@@ -290,7 +300,12 @@ public class FolderSync {
 					
 					if (upload) {
 						System.out.println("  Uploading: " + p + " -> " + remotePath);
-						try (InputStream in = Files.newInputStream(p)) {
+						try (InputStream fin = Files.newInputStream(p)) {
+							InputStream in = fin;
+							if (encryptPassphrase != null) {
+								// wrap input stream with encryption
+								in = new EncryptedInputStream(in, encryptPassphrase);
+							}
 							// ensure parent exists remotely
 							// (we assume parent exists because we created remoteFolder früher)
 							client.uploadFile(remotePath, in, Files.getLastModifiedTime(p).toMillis());
