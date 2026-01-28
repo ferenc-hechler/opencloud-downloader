@@ -1,7 +1,0 @@
-#testdata\SkipWindows\JAVA\JDK17=SKIPWindows/JAVA/JDK17
-testdata\SkipWindows\JAVA\SKIP=SKIPWindows/JAVA/SKIP
-testdata\SkipWindows\swscripts=SKIPWindows/swscripts
-testdata\SkipWindows\TEMP=SKIPWindows/TEMP
-
-
-

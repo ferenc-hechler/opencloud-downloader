@@ -9,7 +9,8 @@ public class UploaderMain {
 		
 //		// test args
 		if (args == null || args.length == 0) {
-			args = new String[] { "opencloud-uploader-sync-relative.yaml" };
+			// args = new String[] { "opencloud-uploader-sync-relative.yaml" };
+			args = new String[] { "opencloud-uploader-syncs.yaml" };
 		}
 		
 		// Erwartet: Pfad zur Sync-Config-Datei (z.B. opencloud-downloader-syncs.txt)
