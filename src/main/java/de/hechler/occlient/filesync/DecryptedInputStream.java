@@ -22,7 +22,8 @@ public class DecryptedInputStream extends FilterInputStream {
 
     private static final int SALT_LENGTH = 16;
     private static final int IV_LENGTH = 16;
-    private static final int HEADER_LENGTH = SALT_LENGTH + IV_LENGTH;
+    @SuppressWarnings("unused")
+	private static final int HEADER_LENGTH = SALT_LENGTH + IV_LENGTH;
     
     private final CipherInputStream cipherInputStream;
     private boolean initialized = false;
