@@ -1,10 +1,10 @@
 sync:
-  #- localFolder: C:\SkipWindows\JAVA\SKIP
-  #  remoteFolder: SKIPWindows/JAVA/SKIP
-  #  ignore:
-  #    - SKIP.properties
-  #- localFolder: C:\SkipWindows\swscripts
-  #  remoteFolder: SKIPWindows/swscripts
+  - localFolder: C:\SkipWindows\JAVA\SKIP
+    remoteFolder: SKIPWindows/JAVA/SKIP
+    ignore:
+      - SKIP.properties
+  - localFolder: C:\SkipWindows\swscripts
+    remoteFolder: SKIPWindows/swscripts
   - localFolder: C:\SkipWindows\TEMP
     remoteFolder: SKIPWindows/TEMP
   #- localFolder: C:\SkipWindows\JAVA\JDK17
