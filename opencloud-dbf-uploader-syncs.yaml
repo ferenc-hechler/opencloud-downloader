@@ -1,0 +1,6 @@
+sync:
+  - localFolder: C:\SkipWindows\TESTDBFs
+    remoteFolder: SKIPWindows/DBFs
+    transform:
+      type: encrypt
+      #passphrase: "..."

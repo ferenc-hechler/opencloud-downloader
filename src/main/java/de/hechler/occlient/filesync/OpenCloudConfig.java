@@ -107,7 +107,15 @@ public class OpenCloudConfig {
     public String getPassword() {
         return properties.getProperty("server.password");
     }
+
+    /**
+     * @return Die Default-Passphrase für die Verschlüsselung (optional, kann null oder leer sein)
+     */
+    public String getDefaultPassphrase() {
+        return properties.getProperty("default.passphrase");
+    }
     
+
     /**
      * Holt einen optionalen Wert aus der Konfiguration
      * 
