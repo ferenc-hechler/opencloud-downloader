@@ -5,7 +5,7 @@
 	<modelVersion>4.0.0</modelVersion>
 
 	<groupId>de.hechler.occlient</groupId>
-	<artifactId>filesync</artifactId>
+	<artifactId>opencloud-sync</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 
 	<properties>
@@ -29,7 +29,7 @@
 	</dependencies>
 
 	<build>
-		<finalName>filesync</finalName>
+		<finalName>opencloud-sync</finalName>
 		<plugins>
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
@@ -41,64 +41,22 @@
 				</configuration>
 			</plugin>
 			<plugin>
-				<artifactId>maven-shade-plugin</artifactId>
-				<version>3.5.1</version>
-				<executions>
-					<execution>
-						<phase>package</phase>
-						<goals>
-							<goal>shade</goal>
-						</goals>
-						<configuration>
-							<createDependencyReducedPom>false</createDependencyReducedPom>
-							<transformers>
-								<transformer
-									implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
-									<!-- Setze die korrekte Main-Klasse für das Projekt -->
-									<mainClass>de.hechler.occlient.filesync.Application</mainClass>
-								</transformer>
-							</transformers>
-						</configuration>
-					</execution>
-				</executions>
-			</plugin>
-			
-			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
 				<artifactId>maven-assembly-plugin</artifactId>
 				<version>3.3.0</version>
+				<configuration>
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+					<archive>
+						<manifest>
+							<mainClass>de.hechler.occlient.filesync.Main</mainClass>
+						</manifest>
+					</archive>
+				</configuration>
 				<executions>
 					<execution>
-						<id>make-assembly-downloader</id>
-						<configuration>
-							<finalName>opencloud-downloader</finalName>
-							<descriptorRefs>
-								<descriptorRef>jar-with-dependencies</descriptorRef>
-							</descriptorRefs>
-							<archive>
-								<manifest>
-									<mainClass>de.hechler.occlient.filesync.DownloaderMain</mainClass>
-								</manifest>
-							</archive>
-						</configuration>
-						<phase>package</phase>
-						<goals>
-							<goal>single</goal>
-						</goals>
-					</execution>
-					<execution>
-						<id>make-assembly-uploader</id>
-						<configuration>
-							<finalName>opencloud-uploader</finalName>
-							<descriptorRefs>
-								<descriptorRef>jar-with-dependencies</descriptorRef>
-							</descriptorRefs>
-							<archive>
-								<manifest>
-									<mainClass>de.hechler.occlient.filesync.UploaderMain</mainClass>
-								</manifest>
-							</archive>
-						</configuration>
+						<id>make-assembly</id>
 						<phase>package</phase>
 						<goals>
 							<goal>single</goal>
