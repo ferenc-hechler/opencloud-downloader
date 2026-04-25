@@ -3,7 +3,7 @@ sync:
     remoteFolder: SKIPWindows/JAVA/SKIP
     ignore:
       - SKIP.properties
-      - opencloud-downloader-temp.jar
+      - opencloud-sync-temp.jar
       - skip-batch-dispatcher-gui-jar-with-dependencies-temp.jar
   - localFolder: C:\SkipWindows\swscripts
     remoteFolder: SKIPWindows/swscripts
