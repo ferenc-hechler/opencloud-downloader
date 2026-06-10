@@ -68,4 +68,15 @@
 		</plugins>
 	</build>
 
+    <distributionManagement>
+      <snapshotRepository>
+        <id>skip-private-snapshots</id>
+        <url>https://jfrog.vps-2.cluster-4.de/artifactory/skip-private-snapshots/</url>
+      </snapshotRepository>
+      <repository>
+        <id>skip-private-releases</id>
+        <url>https://jfrog.vps-2.cluster-4.de/artifactory/skip-private-releases/</url>
+      </repository>
+    </distributionManagement>
+
 </project>
